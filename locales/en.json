@@ -84,12 +84,17 @@
   "apiError_selectionFailed": "Failed to open API key selection dialog:",
 
   "inviteFriendModalTitle": "Invite a Friend to Dream Weaver",
-  "inviteFriendDescription": "Share the magic of Dream Weaver with your friends! Invite them to join and explore their dreams.",
+  "inviteFriendDescription": "Unlock the world of dreams! Dream Weaver is an immersive app to capture, interpret, and visualize your dreams. Join me and let's explore our subconscious together!",
   "shareVia": "Share via:",
   "copyLink": "Copy Link",
   "copyCode": "Copy Code",
   "inviteCodeLabel": "Your Invite Code:",
+  "inviteCodeCopyInstructions": "Share this code with your friends so they can connect with you on Dream Weaver!",
   "copiedSuccessfully": "Copied!",
+  "copiedToClipboard": "Copied to clipboard!",
+  "copyFailedAlert": "Failed to copy. Please try again or copy manually.",
+  "shareGeneric": "Share",
+  "inviteMessage": "Hey, check out Dream Weaver! It's an amazing app for journaling dreams and getting AI insights. Join me using my invite code: {code}. Find it here: {link}",
 
   "findUsersModalTitle": "Find Nearby Dreamers",
   "searchUsersPlaceholder": "Filter nearby dreamers by username...",

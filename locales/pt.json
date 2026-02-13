@@ -84,12 +84,17 @@
   "apiError_selectionFailed": "Falha ao abrir a caixa de diálogo de seleção da chave de API:",
 
   "inviteFriendModalTitle": "Convide um Amigo para o Tecedor de Sonhos",
-  "inviteFriendDescription": "Compartilhe a magia do Tecedor de Sonhos com seus amigos! Convide-os para participar e explorar seus sonhos.",
+  "inviteFriendDescription": "Desvende o mundo dos sonhos! O Tecedor de Sonhos é um aplicativo imersivo para registrar, interpretar e visualizar seus sonhos. Junte-se a mim e vamos explorar nosso subconsciente juntos!",
   "shareVia": "Compartilhar via:",
   "copyLink": "Copiar Link",
   "copyCode": "Copiar Código",
   "inviteCodeLabel": "Seu Código de Convite:",
+  "inviteCodeCopyInstructions": "Compartilhe este código com seus amigos para que eles possam se conectar com você no Tecedor de Sonhos!",
   "copiedSuccessfully": "Copiado!",
+  "copiedToClipboard": "Copiado para a área de transferência!",
+  "copyFailedAlert": "Falha ao copiar. Por favor, tente novamente ou copie manualmente.",
+  "shareGeneric": "Compartilhar",
+  "inviteMessage": "Olá, confira o Tecedor de Sonhos! É um aplicativo incrível para registrar sonhos e obter insights de IA. Junte-se a mim usando meu código de convite: {code}. Encontre-o aqui: {link}",
 
   "findUsersModalTitle": "Encontrar Sonhadores Próximos",
   "searchUsersPlaceholder": "Filtrar sonhadores próximos por nome de usuário...",
