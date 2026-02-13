@@ -5,7 +5,7 @@ import { useLocale } from '../context/LocaleContext'; // Import useLocale
 
 interface ApiKeyPromptProps {
   onSelectKey: () => void;
-  message: string;
+  message: string; // This message is now expected to be a translation key
   t: (key: string) => string; // Add t function prop
 }
 
@@ -14,7 +14,7 @@ const ApiKeyPrompt: React.FC<ApiKeyPromptProps> = ({ onSelectKey, message, t }) 
     <div className="p-6 bg-gradient-to-br from-red-950 to-purple-950 border border-red-800 rounded-xl text-white text-center shadow-lg">
       <h3 className="text-2xl font-bold mb-4 text-red-300">{t('apiKeyRequired')}</h3>
       <p className="mb-6 text-lg">
-        {message}
+        {t(message)} {/* Translate the message here */}
       </p>
       <Button variant="primary" onClick={onSelectKey} className="w-full md:w-auto">
         {t('selectApiKey')}

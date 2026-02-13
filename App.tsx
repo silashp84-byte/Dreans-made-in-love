@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { DreamEntry, AppMode, Prompt, ToolType, ApiResponse } from './types';
-import { loadDreamEntries, saveDreamEntries } from './services/localStorageService';
+import { DreamEntry, AppMode, Prompt, ToolType, ApiResponse, SimulatedUser } from './types';
+import { loadDreamEntries, saveDreamEntries, loadFollowedUsers, saveFollowedUsers } from './services/localStorageService';
 import {
-  PREDEFINED_PROMPTS, // Still needed for structure, but content from locales
+  // PREDEFINED_PROMPTS, // Still needed for structure, but content from locales
 } from './constants'; // Still import constants for model names etc.
 import DreamscapeBackground from './components/DreamscapeBackground';
 import Button from './components/Button';
@@ -16,15 +16,24 @@ import ApiKeyPrompt from './components/ApiKeyPrompt';
 import { interpretDream, generateStorySpark, generateImageVisualizer, handleApiKeySelection, checkApiKeyStatus } from './services/geminiService';
 import { useLocale } from './context/LocaleContext'; // Import useLocale hook
 import LanguageSelectorModal from './components/LanguageSelectorModal';
+import InviteFriendModal from './components/InviteFriendModal';
+import FindNearbyUsersModal from './components/FindNearbyUsersModal';
+import SimulatedUserProfileModal from './components/SimulatedUserProfileModal';
+import MyConnectionsModal from './components/MyConnectionsModal'; // Import new modal
 
 const App: React.FC = () => {
   const { locale, setLocale, t } = useLocale(); // Use the locale hook
   const [entries, setEntries] = useState<DreamEntry[]>([]);
   const [currentMode, setCurrentMode] = useState<AppMode>('list');
   const [selectedEntry, setSelectedEntry] = useState<DreamEntry | null>(null);
-  const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null);
+  const [currentPrompt, setCurrentPrompt] = useState<Prompt | null>(null); // Initialize with null, set in useEffect
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [showLanguageSelector, setShowLanguageSelector] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isFindNearbyUsersModalOpen, setIsFindNearbyUsersModalOpen] = useState(false);
+  const [isMyConnectionsModalOpen, setIsMyConnectionsModalOpen] = useState(false); // New state for MyConnections modal
+  const [selectedSimulatedUser, setSelectedSimulatedUser] = useState<SimulatedUser | null>(null);
+  const [followedUserIds, setFollowedUserIds] = useState<Set<string>>(new Set()); // New state for followed users
 
   // AI Modal State
   const [isAiModalOpen, setIsAiModalOpen] = useState(false);
@@ -37,15 +46,14 @@ const App: React.FC = () => {
   // API Key state for image generation (which explicitly requires user selection)
   const [apiKeyRequiredMessage, setApiKeyRequiredMessage] = useState<string | null>(null);
 
-  // Initialize: Load entries, check language preference, set online status
+  // Initialize: Load entries, check language preference, set online status, load followed users
   useEffect(() => {
     setEntries(loadDreamEntries());
+    setFollowedUserIds(loadFollowedUsers()); // Load followed users
 
-    // Check if locale is already set, if not, show language selector
     if (!localStorage.getItem('dreamWeaverLocale')) {
       setShowLanguageSelector(true);
     } else {
-      // If locale is set, ensure it's loaded by LocaleProvider and hide selector
       setShowLanguageSelector(false);
     }
 
@@ -59,17 +67,32 @@ const App: React.FC = () => {
     };
   }, []); // Empty dependency array means this runs once on mount
 
+  // Initialize random prompt after translations are loaded
+  useEffect(() => {
+    // Check if a known translation key is not returning itself, meaning translations are loaded
+    if (t('inspiration_hiddenGarden') !== 'inspiration_hiddenGarden' && !currentPrompt) {
+      generateRandomPrompt();
+    }
+  }, [t, currentPrompt]); // Regenerate if locale changes or if currentPrompt is null after translation loads
+
+
   // Save entries whenever the 'entries' state changes
   useEffect(() => {
     saveDreamEntries(entries);
   }, [entries]);
 
+  // Save followed users whenever the 'followedUserIds' state changes
+  useEffect(() => {
+    saveFollowedUsers(followedUserIds);
+  }, [followedUserIds]);
+
   const handleLanguageSelect = useCallback((selectedLocale: string) => {
     setLocale(selectedLocale);
-    localStorage.setItem('dreamWeaverLocale', selectedLocale); // Ensure it's explicitly saved
+    localStorage.setItem('dreamWeaverLocale', selectedLocale);
     setShowLanguageSelector(false);
+    // After language change, force re-evaluation of currentPrompt to get translated text
+    setCurrentPrompt(null); // This will trigger the useEffect to regenerate prompt
   }, [setLocale]);
-
 
   const addOrUpdateEntry = useCallback((entry: DreamEntry) => {
     setEntries((prevEntries) => {
@@ -100,19 +123,19 @@ const App: React.FC = () => {
   }, [entries]);
 
   const generateRandomPrompt = useCallback(() => {
-    const translatedPrompts: Prompt[] = [
-      { id: 'p1', text: t('prompt_hiddenGarden'), type: 'text' },
-      { id: 'p2', text: t('prompt_dreamMap'), type: 'text' },
-      { id: 'p3', text: t('prompt_speakingAnimal'), type: 'text' },
-      { id: 'p4', text: t('prompt_emotionsAsColors'), type: 'text' },
-      { id: 'p5', text: t('prompt_forgottenLullaby'), type: 'text' },
-      { id: 'p6', text: t('prompt_stardustCreature'), type: 'image' },
-      { id: 'p7', text: t('prompt_futuristicCity'), type: 'image' },
-      { id: 'p8', text: t('prompt_readingNook'), type: 'image' },
+    const translatedInspirations: Prompt[] = [
+      { id: 'p1', text: t('inspiration_hiddenGarden'), type: 'text' },
+      { id: 'p2', text: t('inspiration_dreamMap'), type: 'text' },
+      { id: 'p3', text: t('inspiration_speakingAnimal'), type: 'text' },
+      { id: 'p4', text: t('inspiration_emotionsAsColors'), type: 'text' },
+      { id: 'p5', text: t('inspiration_forgottenLullaby'), type: 'text' },
+      { id: 'p6', text: t('inspiration_stardustCreature'), type: 'image' },
+      { id: 'p7', text: t('inspiration_futuristicCity'), type: 'image' },
+      { id: 'p8', text: t('inspiration_readingNook'), type: 'image' },
     ];
-    const randomIndex = Math.floor(Math.random() * translatedPrompts.length);
-    setCurrentPrompt(translatedPrompts[randomIndex]);
-  }, [t]); // Depend on 't' to re-generate if locale changes
+    const randomIndex = Math.floor(Math.random() * translatedInspirations.length);
+    setCurrentPrompt(translatedInspirations[randomIndex]);
+  }, [t]);
 
   // Handle AI Tool triggering
   const triggerAITool = useCallback(async (entry: DreamEntry, toolType: ToolType) => {
@@ -131,6 +154,8 @@ const App: React.FC = () => {
     const aiVisualizerInstruction = t('systemInstruction_aiVisualizer');
 
     const checkKeyResponse = await checkApiKeyStatus(toolType);
+    // If checkKeyResponse.message is a translation key, use it directly.
+    // If it's a full error string (e.g., from geminiService throwing an error directly), then translate it here.
     if (!checkKeyResponse.success) {
       setApiKeyRequiredMessage(checkKeyResponse.message);
       setAiLoading(false);
@@ -150,42 +175,92 @@ const App: React.FC = () => {
         result = await generateImageVisualizer(keywords, aiVisualizerInstruction);
         if (result.success && result.data) {
           setAiImageResult(result.data);
-          setAiResult(t('imageGeneratedSuccessfully'));
+          // This message is purely for internal success, the UI displays the image.
+          // If we wanted to show a success message on the UI, it would need to be translated.
+          // For now, it's just a placeholder string returned by the service.
+          // setAiResult(t('imageGeneratedSuccessfully')); // If we wanted to display this
         }
       } else {
-        result = { success: false, message: t('apiError_unknownTool') };
+        result = { success: false, message: 'apiError_unknownTool' }; // Use translation key
       }
 
       if (result.success) {
+        // If the service returns a specific translated string for text results, use it.
+        // Otherwise, if it's a success message, we might translate it here if needed for UI.
         setAiResult(result.data);
       } else {
+        // If result.message is already a translation key from the service, pass it.
+        // Otherwise, it's an error string that needs a more generic translation key.
         setAiError(result.message);
-        if (result.message.includes("API key error")) { // Check for specific API key messages
+        // If the message is related to API key, use that key for the dedicated prompt.
+        if (result.message.includes("apiError_")) {
           setApiKeyRequiredMessage(result.message);
         }
       }
     } catch (error: any) {
       console.error("Error during AI tool call:", error);
-      setAiError(`${t('apiError_unexpected')} ${error.message}`);
+      // Catch any unexpected JavaScript errors during the call
+      setAiError('apiError_unexpected'); // Use translation key
+      setApiKeyRequiredMessage('apiError_unexpected'); // Fallback in case of unknown error needing key
     } finally {
       setAiLoading(false);
     }
-  }, [t]); // Depend on 't' so instructions update with locale
+  }, [t]);
 
   const handleApiKeyPromptSelect = useCallback(async () => {
-    setApiKeyRequiredMessage(null); // Clear previous message
-    const result = await handleApiKeySelection();
+    setApiKeyRequiredMessage(null);
+    const result = await handleApiKeySelection(); // This returns a translation key for its message
     if (!result.success) {
-      setAiError(result.message);
+      setAiError(result.message); // This is already a translation key
     } else {
-      setAiError(null); // Clear generic error if selection initiated successfully
+      setAiError(null);
     }
   }, []);
 
+  const handleViewSimulatedProfile = useCallback((user: SimulatedUser) => {
+    setIsFindNearbyUsersModalOpen(false); // Close find users modal
+    setIsMyConnectionsModalOpen(false); // Also close connections modal if open
+    setSelectedSimulatedUser(user);
+  }, []);
+
+  const handleCloseSimulatedProfile = useCallback(() => {
+    setSelectedSimulatedUser(null); // Close profile modal
+    // Decide which modal to reopen based on which one was open before
+    // For simplicity, let's reopen the Find Nearby Users modal for now.
+    // In a more complex app, you might track the previous modal.
+    setIsFindNearbyUsersModalOpen(true);
+  }, []);
+
+  const toggleFollow = useCallback((userId: string) => {
+    setFollowedUserIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(userId)) {
+        newSet.delete(userId);
+      } else {
+        newSet.add(userId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  // Extract keywords from current user's dreams for shared interests
+  const extractCurrentUserKeywords = useCallback((): string[] => {
+    const keywords = new Set<string>();
+    entries.forEach(entry => {
+      entry.tags.forEach(tag => keywords.add(tag.toLowerCase()));
+      entry.title.split(/\s+/).forEach(word => {
+        if (word.length > 2) keywords.add(word.toLowerCase());
+      });
+      entry.content.split(/\s+/).forEach(word => {
+        if (word.length > 2) keywords.add(word.toLowerCase());
+      });
+    });
+    return Array.from(keywords);
+  }, [entries]);
+
+  const currentUserKeywords = extractCurrentUserKeywords();
+
   const renderContent = () => {
-    // Mood options need to be translated for CreateEntryForm
-    // Removed the problematic line that caused the error:
-    // const translatedMoodOptions = PREDEFINED_PROMPTS.map(p => t(`mood_${p.id.split('_')[1]}`)).filter(m => m !== `mood_${p.id.split('_')[1]}`); // Filter out non-mood prompts
     const translatedMoods = ['Happy', 'Calm', 'Anxious', 'Excited', 'Confused', 'Sad', 'Neutral', 'Inspired'].map(mood => t(`mood_${mood}`));
 
     switch (currentMode) {
@@ -199,8 +274,8 @@ const App: React.FC = () => {
               setSelectedEntry(null);
             }}
             onDelete={deleteEntry}
-            t={t} // Pass translation function
-            moodOptions={translatedMoods} // Pass translated mood options
+            t={t}
+            moodOptions={translatedMoods}
           />
         );
       case 'detail':
@@ -217,7 +292,7 @@ const App: React.FC = () => {
             }}
             onTriggerAITool={triggerAITool}
             isOnline={isOnline}
-            t={t} // Pass translation function
+            t={t}
           />
         ) : (
           <div className="text-center text-white text-xl mt-16">{t('entryNotFound')}</div>
@@ -234,7 +309,7 @@ const App: React.FC = () => {
                 ) : (
                   <>
                     <p className="text-lg italic text-indigo-100 mb-4">{currentPrompt.text}</p>
-                    <img src={`https://picsum.photos/400/200?random=${currentPrompt.id}`} alt="Visual Prompt" className="w-full h-auto rounded-lg mt-4 object-cover" />
+                    <img src={`https://picsum.photos/400/200?random=${currentPrompt.id}`} alt={t('visualInspiration')} className="w-full h-auto rounded-lg mt-4 object-cover" />
                   </>
                 )}
 
@@ -283,6 +358,15 @@ const App: React.FC = () => {
             <Button onClick={generateRandomPrompt} variant="outline">
               {t('inspireMe')}
             </Button>
+            <Button onClick={() => setIsInviteModalOpen(true)} variant="ghost" className="text-indigo-200 hover:text-white">
+              {t('inviteFriend')}
+            </Button>
+            <Button onClick={() => setIsFindNearbyUsersModalOpen(true)} variant="ghost" className="text-indigo-200 hover:text-white">
+              {t('findUsers')}
+            </Button>
+            <Button onClick={() => setIsMyConnectionsModalOpen(true)} variant="ghost" className="text-indigo-200 hover:text-white">
+              {t('myConnections')}
+            </Button>
           </div>
         </header>
 
@@ -294,7 +378,7 @@ const App: React.FC = () => {
       {/* AI Result Modal */}
       <Modal isOpen={isAiModalOpen} onClose={() => setIsAiModalOpen(false)} title={aiToolTitle}>
         {aiLoading && <LoadingSpinner />}
-        {aiError && <p className="text-red-300 mb-4 text-center">{aiError}</p>}
+        {aiError && <p className="text-red-300 mb-4 text-center">{t(aiError)}</p>} {/* Translate aiError */}
         {apiKeyRequiredMessage && (
           <ApiKeyPrompt onSelectKey={handleApiKeyPromptSelect} message={apiKeyRequiredMessage} t={t} />
         )}
@@ -302,8 +386,8 @@ const App: React.FC = () => {
           <>
             {aiImageResult ? (
               <div className="flex flex-col items-center">
-                <img src={aiImageResult} alt="AI Generated Visual" className="max-w-full h-auto rounded-lg shadow-lg mb-4" />
-                <p className="text-indigo-100 text-lg text-center">{aiResult}</p>
+                <img src={aiImageResult} alt={t('aiGeneratedVisual')} className="max-w-full h-auto rounded-lg shadow-lg mb-4" /> {/* Translate alt text */}
+                <p className="text-indigo-100 text-lg text-center">{t('imageGeneratedSuccessfully')}</p> {/* Translate success message */}
               </div>
             ) : (
               <p className="whitespace-pre-wrap text-indigo-100 text-lg">{aiResult}</p>
@@ -315,6 +399,39 @@ const App: React.FC = () => {
 
       {/* Language Selector Modal */}
       <LanguageSelectorModal isOpen={showLanguageSelector} onSelectLanguage={handleLanguageSelect} />
+
+      {/* Invite Friend Modal */}
+      <InviteFriendModal isOpen={isInviteModalOpen} onClose={() => setIsInviteModalOpen(false)} />
+
+      {/* Find Nearby Users Modal */}
+      <FindNearbyUsersModal
+        isOpen={isFindNearbyUsersModalOpen}
+        onClose={() => setIsFindNearbyUsersModalOpen(false)}
+        onViewProfile={handleViewSimulatedProfile}
+        followedUserIds={followedUserIds}
+        onToggleFollow={toggleFollow}
+        currentUserKeywords={currentUserKeywords}
+      />
+
+      {/* Simulated User Profile Modal */}
+      <SimulatedUserProfileModal
+        isOpen={!!selectedSimulatedUser}
+        onClose={handleCloseSimulatedProfile}
+        user={selectedSimulatedUser}
+        isFollowing={!!selectedSimulatedUser && followedUserIds.has(selectedSimulatedUser.id)}
+        onToggleFollow={toggleFollow}
+        currentUserKeywords={currentUserKeywords}
+      />
+
+      {/* My Connections Modal */}
+      <MyConnectionsModal
+        isOpen={isMyConnectionsModalOpen}
+        onClose={() => setIsMyConnectionsModalOpen(false)}
+        followedUserIds={followedUserIds}
+        onViewProfile={handleViewSimulatedProfile}
+        onToggleFollow={toggleFollow}
+        currentUserKeywords={currentUserKeywords}
+      />
 
 
       {/* Sticky Footer for Mobile-First Approach */}
@@ -352,6 +469,40 @@ const App: React.FC = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
           </svg>
           {t('footerInspire')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsInviteModalOpen(true)}
+          className="flex flex-col items-center text-sm text-indigo-200 hover:text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354l.001.001V21h-1V4.354a3 3 0 01-5.999 0H3v-1h3.001A3 3 0 0112 0v4.354zM21 4h-3a3 3 0 00-3-3H7a3 3 0 00-3 3v1h17v-1z" />
+          </svg>
+          {t('footerInvite')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsFindNearbyUsersModalOpen(true)}
+          className="flex flex-col items-center text-sm text-indigo-200 hover:text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          {t('footerFindUsers')}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsMyConnectionsModalOpen(true)}
+          className="flex flex-col items-center text-sm text-indigo-200 hover:text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          {t('footerConnections')}
         </Button>
       </footer>
     </div>

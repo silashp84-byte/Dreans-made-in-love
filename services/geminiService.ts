@@ -7,7 +7,8 @@ import { ApiResponse, ToolType } from '../types';
 const getGeminiClient = () => {
   const apiKey = process.env.API_KEY; // Assumed to be injected
   if (!apiKey) {
-    throw new Error('Google Gemini API key is not set. Please select an API key.');
+    // Return a specific error key instead of a hardcoded string
+    throw new Error('apiError_noApiKey');
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -44,16 +45,16 @@ const callGeminiTextModel = async (
     });
     const text = response.text;
     if (!text) {
-      throw new Error('No text content received from Gemini API.');
+      return { success: false, message: 'apiError_noTextContent' };
     }
     return { success: true, message: 'Interpretation successful', data: text };
   } catch (error: any) {
     console.error(`Error calling Gemini text model (${modelName}):`, error);
-    // Specific error handling for API key not found
     if (error.message.includes("API key not found") || error.message.includes("Unauthorized") || error.message.includes("Requested entity was not found.")) {
-      return { success: false, message: "API key error: Please ensure you have a valid, paid API key selected for this feature." };
+      return { success: false, message: "apiError_paidApiKeyRequired" };
     }
-    return { success: false, message: `Failed to get interpretation: ${error.message}` };
+    // Return a generic error key for unexpected errors
+    return { success: false, message: `apiError_dreamInterpretationFailed` + `${error.message}` };
   }
 };
 
@@ -64,7 +65,7 @@ export const interpretDream = async (
   systemInstruction: string // Now a required parameter
 ): Promise<ApiResponse> => {
   if (!dreamText && !dreamImage) {
-    return { success: false, message: "Please provide either text or an image for dream interpretation." };
+    return { success: false, message: "apiError_provideTextOrImage" };
   }
 
   const parts: Part[] = [];
@@ -93,15 +94,15 @@ export const interpretDream = async (
     });
     const text = response.text;
     if (!text) {
-      throw new Error('No text content received from Gemini API.');
+      return { success: false, message: 'apiError_noTextContent' };
     }
     return { success: true, message: 'Interpretation successful', data: text };
   } catch (error: any) {
     console.error("Error interpreting dream:", error);
     if (error.message.includes("Requested entity was not found.") || error.message.includes("403 Forbidden")) {
-        return { success: false, message: "API key error: This feature requires a paid API key. Please select one through the 'Select API Key' option." };
+        return { success: false, message: "apiError_paidApiKeyRequired" };
     }
-    return { success: false, message: `Failed to interpret dream: ${error.message}` };
+    return { success: false, message: `apiError_dreamInterpretationFailed` + `${error.message}` };
   }
 };
 
@@ -127,13 +128,13 @@ export const generateImageVisualizer = async (
     if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
       const hasKey = await window.aistudio.hasSelectedApiKey();
       if (!hasKey) {
-        return { success: false, message: "Please select an API key for image generation via the 'Select API Key' button." };
+        return { success: false, message: "apiError_noApiKey" }; // Use translation key
       }
     } else {
         // Fallback for environments without window.aistudio, assuming API_KEY is set.
         // This is a less robust check, as window.aistudio is the official way for this context.
         if (!process.env.API_KEY) {
-            return { success: false, message: "API key not found. Ensure API_KEY is set or select one." };
+            return { success: false, message: "apiError_noApiKey" }; // Use translation key
         }
     }
 
@@ -157,17 +158,17 @@ export const generateImageVisualizer = async (
         if (part.inlineData) {
           const base64EncodeString: string = part.inlineData.data;
           const imageUrl = `data:${part.inlineData.mimeType};base64,${base64EncodeString}`;
-          return { success: true, message: 'Image generated successfully', data: imageUrl };
+          return { success: true, message: 'Image generated successfully', data: imageUrl }; // This message is for console or specific internal use, actual UI will use a translated text.
         }
       }
     }
-    throw new Error('No image data received from Gemini API.');
+    return { success: false, message: 'apiError_noImageData' }; // Use translation key
   } catch (error: any) {
     console.error("Error generating image visualizer:", error);
     if (error.message.includes("Requested entity was not found.") || error.message.includes("403 Forbidden") || error.message.includes("API key error: This feature requires a paid API key.")) {
-        return { success: false, message: "API key error: This feature requires a paid API key. Please select one through the 'Select API Key' option." };
+        return { success: false, message: "apiError_paidApiKeyRequired" }; // Use translation key
     }
-    return { success: false, message: `Failed to generate image: ${error.message}` };
+    return { success: false, message: `apiError_imageGenerationFailed` + `${error.message}` }; // Use translation key
   }
 };
 
@@ -177,13 +178,13 @@ export const handleApiKeySelection = async (): Promise<ApiResponse> => {
     try {
       await window.aistudio.openSelectKey();
       // Assume success for race condition
-      return { success: true, message: "API key selection initiated. Please verify in the dialog." };
+      return { success: true, message: "apiError_selectionInitiated" }; // Use translation key
     } catch (error: any) {
       console.error("Error opening API key selection dialog:", error);
-      return { success: false, message: `Failed to open API key selection: ${error.message}` };
+      return { success: false, message: `apiError_selectionFailed` + `${error.message}` }; // Use translation key
     }
   } else {
-    return { success: false, message: "API key selection not available in this environment. Ensure your API_KEY is set." };
+    return { success: false, message: "apiError_selectionNotAvailable" }; // Use translation key
   }
 };
 
@@ -195,24 +196,24 @@ export const checkApiKeyStatus = async (toolType: ToolType): Promise<ApiResponse
             try {
                 const hasKey = await window.aistudio.hasSelectedApiKey();
                 if (!hasKey) {
-                    return { success: false, message: "No API key selected for this feature." };
+                    return { success: false, message: "apiError_noApiKey" }; // Use translation key
                 }
             } catch (error) {
                 console.error("Error checking API key status:", error);
-                return { success: false, message: "Could not verify API key status." };
+                return { success: false, message: "apiError_couldNotVerifyKey" }; // Use translation key
             }
         } else {
             // For environments where window.aistudio is not available, we assume process.env.API_KEY is handled externally.
             if (!process.env.API_KEY) {
-                return { success: false, message: "API key not found in environment." };
+                return { success: false, message: "apiError_noApiKey" }; // Use translation key
             }
         }
     }
     // For other tool types, we just check if process.env.API_KEY is available as a basic check.
     // The actual API call will handle more specific errors.
     if (!process.env.API_KEY) {
-      return { success: false, message: "API key not found in environment for basic features." };
+      return { success: false, message: "apiError_noApiKey" }; // Use translation key
     }
 
-    return { success: true, message: "API key appears to be available." };
+    return { success: true, message: "API key appears to be available." }; // This message is for console or specific internal use
 };
