@@ -35,7 +35,7 @@ const InviteFriendModal: React.FC<InviteFriendModalProps> = ({ isOpen, onClose }
     }
   }, [t]);
 
-  const appShareLink = window.location.origin; // For now, share the current app URL
+  const appShareLink = "https://ais-pre-h57uxxak76rzoebx46ksfy-59731419597.us-east1.run.app";
 
   const getShareMessage = useCallback((code: string) => {
     return t('inviteMessage', { code, link: appShareLink }); // Use template string with t()

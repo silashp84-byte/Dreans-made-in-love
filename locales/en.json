@@ -131,5 +131,7 @@
   "social_twitter": "Twitter",
   "social_facebook": "Facebook",
   "visualInspiration": "Visual Inspiration",
-  "aiGeneratedVisual": "AI Generated Visual"
+  "aiGeneratedVisual": "AI Generated Visual",
+  "shareApp": "Share App",
+  "appLinkCopied": "App link copied to clipboard!"
 }

@@ -260,6 +260,27 @@ const App: React.FC = () => {
 
   const currentUserKeywords = extractCurrentUserKeywords();
 
+  const handleShareApp = useCallback(async () => {
+    const sharedUrl = "https://ais-pre-h57uxxak76rzoebx46ksfy-59731419597.us-east1.run.app";
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: t('appName'),
+          text: t('inviteFriendDescription'),
+          url: sharedUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(sharedUrl);
+        // Using a simple alert for now as per existing patterns in the app
+        alert(t('appLinkCopied'));
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        console.error('Error sharing app:', error);
+      }
+    }
+  }, [t]);
+
   const renderContent = () => {
     const translatedMoods = ['Happy', 'Calm', 'Anxious', 'Excited', 'Confused', 'Sad', 'Neutral', 'Inspired'].map(mood => t(`mood_${mood}`));
 
@@ -357,6 +378,12 @@ const App: React.FC = () => {
             </Button>
             <Button onClick={generateRandomPrompt} variant="outline">
               {t('inspireMe')}
+            </Button>
+            <Button onClick={handleShareApp} variant="ghost" className="text-indigo-200 hover:text-white flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.516 2.607c.484.192 1.085.192 1.569 0l6.516-2.607m-13.032 0A3 3 0 115.684 9.342a3 3 0 013-1.342m-3 1.342C5.482 12.482 5.614 12.938 5.816 13.342m0 2.684c.202.404.416.792.646 1.15l-3.34 1.336c-.485.192-1.086.192-1.57 0l-3.34-1.336c.23-.358.444-.746.646-1.15m0-2.684a3 3 0 110-2.684" />
+              </svg>
+              {t('shareApp')}
             </Button>
             <Button onClick={() => setIsInviteModalOpen(true)} variant="ghost" className="text-indigo-200 hover:text-white">
               {t('inviteFriend')}
