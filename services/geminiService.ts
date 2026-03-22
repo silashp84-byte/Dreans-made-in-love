@@ -50,7 +50,7 @@ const callGeminiTextModel = async (
     return { success: true, message: 'Interpretation successful', data: text };
   } catch (error: any) {
     console.error(`Error calling Gemini text model (${modelName}):`, error);
-    if (error.message.includes("API key not found") || error.message.includes("Unauthorized") || error.message.includes("Requested entity was not found.")) {
+    if (error.message.includes("API key not found") || error.message.includes("Unauthorized") || error.message.includes("Requested entity was not found.") || error.message.includes("403 Forbidden") || error.message.includes("API key error: This feature requires a paid API key.")) {
       return { success: false, message: "apiError_paidApiKeyRequired" };
     }
     // Return a generic error key for unexpected errors
@@ -69,7 +69,11 @@ export const interpretDream = async (
   }
 
   const parts: Part[] = [];
+  let modelToUse = GEMINI_MODEL_TEXT; // Default to text-only model for interpretation
+
   if (dreamImage) {
+    // If an image is provided, switch to the image model and add image part
+    modelToUse = GEMINI_MODEL_IMAGE;
     // Try to infer mime type, default to jpeg if unknown
     const mimeMatch = dreamImage.match(/^data:(image\/(png|jpeg|webp));base64,/);
     const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
@@ -82,7 +86,7 @@ export const interpretDream = async (
   try {
     const ai = getGeminiClient();
     const response: GenerateContentResponse = await ai.models.generateContent({
-      model: GEMINI_MODEL_IMAGE, // Use image model if image is provided, or for a richer response
+      model: modelToUse, // Use dynamically selected model
       contents: { parts: parts },
       config: {
         systemInstruction: systemInstruction,
@@ -99,7 +103,8 @@ export const interpretDream = async (
     return { success: true, message: 'Interpretation successful', data: text };
   } catch (error: any) {
     console.error("Error interpreting dream:", error);
-    if (error.message.includes("Requested entity was not found.") || error.message.includes("403 Forbidden")) {
+    if (error.message.includes("Requested entity was not found.") || error.message.includes("403 Forbidden") || error.message.includes("API key error: This feature requires a paid API key.")) {
+        // This specific error indicates a paid API key is needed, usually for image models.
         return { success: false, message: "apiError_paidApiKeyRequired" };
     }
     return { success: false, message: `apiError_dreamInterpretationFailed` + `${error.message}` };
@@ -124,7 +129,7 @@ export const generateImageVisualizer = async (
   const prompt = `Generate a unique, abstract, and aesthetically pleasing image based on these descriptive keywords: "${keywords}". Focus on vivid colors, ethereal textures, and a dreamlike quality.`;
 
   try {
-    // Check if the API key is selected (required for image models)
+    // For AI Visualizer, we explicitly check for a selected paid API key as it always uses the image model.
     if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
       const hasKey = await window.aistudio.hasSelectedApiKey();
       if (!hasKey) {
@@ -189,8 +194,8 @@ export const handleApiKeySelection = async (): Promise<ApiResponse> => {
 };
 
 export const checkApiKeyStatus = async (toolType: ToolType): Promise<ApiResponse> => {
-    // Only GEMINI_MODEL_IMAGE requires explicit check via window.aistudio.
-    // Other models are assumed to work with process.env.API_KEY if present.
+    // Only 'aiVisualizer' explicitly requires `GEMINI_MODEL_IMAGE` from the outset,
+    // and therefore needs the `window.aistudio.hasSelectedApiKey()` check.
     if (toolType === 'aiVisualizer') {
         if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
             try {
@@ -199,18 +204,21 @@ export const checkApiKeyStatus = async (toolType: ToolType): Promise<ApiResponse
                     return { success: false, message: "apiError_noApiKey" }; // Use translation key
                 }
             } catch (error) {
-                console.error("Error checking API key status:", error);
+                console.error("Error checking API key status for Visualizer:", error);
                 return { success: false, message: "apiError_couldNotVerifyKey" }; // Use translation key
             }
         } else {
-            // For environments where window.aistudio is not available, we assume process.env.API_KEY is handled externally.
+            // Fallback for environments without window.aistudio, still assuming paid key needed for visualizer.
+            // This is a basic check; the actual API call will confirm.
             if (!process.env.API_KEY) {
                 return { success: false, message: "apiError_noApiKey" }; // Use translation key
             }
         }
     }
-    // For other tool types, we just check if process.env.API_KEY is available as a basic check.
-    // The actual API call will handle more specific errors.
+    // For 'dreamInterpreter' and 'storySpark', a basic check for `process.env.API_KEY` is sufficient initially.
+    // The specific model (text vs. image) and its potential paid requirements will be handled by the
+    // respective functions (e.g., interpretDream) and their catch blocks if a paid API key is indeed needed
+    // (e.g., if interpretDream receives an image input).
     if (!process.env.API_KEY) {
       return { success: false, message: "apiError_noApiKey" }; // Use translation key
     }

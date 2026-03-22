@@ -36,8 +36,10 @@ export const LocaleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   useEffect(() => {
     // Load translations whenever the locale changes
     loadTranslations(locale).then(setTranslations);
-    // Save locale preference to localStorage
-    localStorage.setItem('dreamWeaverLocale', locale);
+    // REMOVED: localStorage.setItem('dreamWeaverLocale', locale); from here.
+    // Saving to localStorage should only happen when the user explicitly selects a language
+    // via handleLanguageSelect in App.tsx. This prevents 'en' from being written
+    // immediately on first load, allowing the language selector to appear.
   }, [locale]);
 
   // Translation function
@@ -48,6 +50,7 @@ export const LocaleProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   // Function to update the locale
   const setLocale = useCallback((newLocale: string) => {
     setLocaleState(newLocale);
+    // localStorage.setItem('dreamWeaverLocale', newLocale); // App.tsx's handleLanguageSelect already does this
   }, []);
 
   const contextValue = { locale, setLocale, t };

@@ -10,7 +10,7 @@ export interface GeolocationResponse {
   success: boolean;
   location?: UserLocation;
   error?: GeolocationPositionError | string;
-  message: string;
+  message: string; // This will now be a translation key
 }
 
 /**
@@ -23,7 +23,7 @@ export const getUserLocation = (): Promise<GeolocationResponse> => {
     if (!navigator.geolocation) {
       resolve({
         success: false,
-        message: 'Geolocation is not supported by your browser.',
+        message: 'geolocation_unsupportedBrowser', // Translation key
         error: 'UnsupportedBrowser',
       });
       return;
@@ -37,28 +37,28 @@ export const getUserLocation = (): Promise<GeolocationResponse> => {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           },
-          message: 'Location fetched successfully.',
+          message: 'locationFetchedSuccessfully', // Translation key
         });
       },
       (error) => {
-        let errorMessage: string;
+        let messageKey: string;
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            errorMessage = 'User denied the request for Geolocation.';
+            messageKey = 'geolocation_permissionDenied'; // Translation key
             break;
           case error.POSITION_UNAVAILABLE:
-            errorMessage = 'Location information is unavailable.';
+            messageKey = 'geolocation_positionUnavailable'; // Translation key
             break;
           case error.TIMEOUT:
-            errorMessage = 'The request to get user location timed out.';
+            messageKey = 'geolocation_timeout'; // Translation key
             break;
           default:
-            errorMessage = 'An unknown error occurred.';
+            messageKey = 'geolocation_unknownError'; // Translation key
             break;
         }
         resolve({
           success: false,
-          message: errorMessage,
+          message: messageKey,
           error: error,
         });
       },

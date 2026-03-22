@@ -34,26 +34,28 @@ const FindNearbyUsersModal: React.FC<FindNearbyUsersModalProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
-  const [locationError, setLocationError] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null); // This will now store a translation key
   const [nearbyUsers, setNearbyUsers] = useState<SimulatedUser[]>([]);
   const [filteredNearbyUsers, setFilteredNearbyUsers] = useState<SimulatedUser[]>([]);
 
   const fetchUserLocation = useCallback(async () => {
     setLocationLoading(true);
-    setLocationError(null);
+    setLocationError(null); // Clear previous error
     const response = await getUserLocation();
     if (response.success && response.location) {
       setUserLocation(response.location);
     } else {
-      let errorDetail = 'Unknown error';
+      // response.message is now a translation key
+      let errorDetail = '';
       if (response.error) {
         if (typeof response.error === 'string') {
-          errorDetail = response.error;
+          errorDetail = response.error; // Still pass raw error for debugging if needed
         } else if (response.error instanceof GeolocationPositionError) {
           errorDetail = response.error.message;
         }
       }
-      setLocationError(response.message.replace('{error}', errorDetail));
+      // Set the error message key, use interpolation if the key expects it
+      setLocationError(response.message);
       setUserLocation(null); // Clear location if there's an error
     }
     setLocationLoading(false);
@@ -108,7 +110,7 @@ const FindNearbyUsersModal: React.FC<FindNearbyUsersModalProps> = ({
       {locationLoading && <LoadingSpinner />}
       {locationError && (
         <div className="text-center text-red-300 mb-4 p-4 bg-red-900 bg-opacity-30 rounded-lg border border-red-700">
-          <p className="mb-2">{locationError}</p>
+          <p className="mb-2">{t(locationError)}</p> {/* Translate the error message key */}
           <Button variant="outline" size="sm" onClick={fetchUserLocation}>
             {t('retryGeolocation')}
           </Button>

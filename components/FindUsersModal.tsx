@@ -10,10 +10,20 @@ import { useLocale } from '../context/LocaleContext';
 interface FindUsersModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onViewProfile: (user: SimulatedUser) => void; // Callback to view a specific user's profile
+  onViewProfile: (user: SimulatedUser) => void;
+  followedUserIds: Set<string>; // New prop
+  onToggleFollow: (userId: string) => void; // New prop
+  currentUserKeywords: string[]; // New prop for shared interests
 }
 
-const FindUsersModal: React.FC<FindUsersModalProps> = ({ isOpen, onClose, onViewProfile }) => {
+const FindUsersModal: React.FC<FindUsersModalProps> = ({
+  isOpen,
+  onClose,
+  onViewProfile,
+  followedUserIds, // Destructure new prop
+  onToggleFollow, // Destructure new prop
+  currentUserKeywords // Destructure new prop
+}) => {
   const { t } = useLocale();
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredUsers, setFilteredUsers] = useState<SimulatedUser[]>([]);
@@ -21,7 +31,8 @@ const FindUsersModal: React.FC<FindUsersModalProps> = ({ isOpen, onClose, onView
   useEffect(() => {
     if (isOpen) {
       setSearchTerm(''); // Reset search term when modal opens
-      setFilteredUsers(SIMULATED_USERS.slice(0, 5)); // Show featured users initially
+      // Initial display: a selection of users, not necessarily "nearby" until location is fetched
+      setFilteredUsers(SIMULATED_USERS.slice(0, 5));
     }
   }, [isOpen]);
 
@@ -49,13 +60,20 @@ const FindUsersModal: React.FC<FindUsersModalProps> = ({ isOpen, onClose, onView
       />
 
       <h3 className="text-xl font-semibold text-indigo-200 mb-4">
-        {searchTerm ? (filteredUsers.length > 0 ? t('featuredUsers') : '') : t('featuredUsers')}
+        {searchTerm ? (filteredUsers.length > 0 ? t('usersNearby') : '') : t('featuredUsers')}
       </h3> {/* Adjust title based on search results */}
 
       {filteredUsers.length > 0 ? (
         <div className="space-y-4 max-h-80 overflow-y-auto custom-scrollbar pr-2">
           {filteredUsers.map((user) => (
-            <SimulatedUserCard key={user.id} user={user} onViewProfile={onViewProfile} />
+            <SimulatedUserCard
+              key={user.id}
+              user={user}
+              onViewProfile={onViewProfile}
+              isFollowing={followedUserIds.has(user.id)}
+              onToggleFollow={onToggleFollow}
+              currentUserKeywords={currentUserKeywords}
+            />
           ))}
         </div>
       ) : (
