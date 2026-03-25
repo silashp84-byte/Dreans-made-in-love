@@ -1,0 +1,75 @@
+{
+  "entities": {
+    "UserProfilePublic": {
+      "title": "Public User Profile",
+      "description": "Stores user profile information visible to others.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "username": { "type": "string", "description": "The display name of the user." },
+        "avatarUrl": { "type": "string", "description": "URL to the user's avatar image." },
+        "bio": { "type": "string", "description": "A short biography of the user." },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the profile was created." }
+      },
+      "required": ["uid", "username", "createdAt"]
+    },
+    "UserProfilePrivate": {
+      "title": "Private User Profile",
+      "description": "Stores sensitive user information, accessible only by the owner.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "The unique ID of the user." },
+        "email": { "type": "string", "format": "email", "description": "The user's email address." },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "When the profile was last updated." }
+      },
+      "required": ["uid", "email"]
+    },
+    "DreamEntry": {
+      "title": "Dream Entry",
+      "description": "A single dream entry created by a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique ID of the entry." },
+        "authorUid": { "type": "string", "description": "UID of the user who created the entry." },
+        "authorName": { "type": "string", "description": "Display name of the author." },
+        "title": { "type": "string", "description": "Title of the dream." },
+        "content": { "type": "string", "description": "The detailed content of the dream." },
+        "tags": { "type": "array", "items": { "type": "string" }, "description": "List of tags associated with the dream." },
+        "mood": { "type": "string", "description": "The mood of the dream." },
+        "imageUrl": { "type": "string", "description": "Optional URL to an image associated with the dream." },
+        "timestamp": { "type": "number", "description": "Unix timestamp of when the entry was created." },
+        "isPublic": { "type": "boolean", "description": "Whether the entry is visible to others." }
+      },
+      "required": ["id", "authorUid", "title", "content", "timestamp"]
+    },
+    "Follow": {
+      "title": "Follow Relationship",
+      "description": "Tracks which users follow each other.",
+      "type": "object",
+      "properties": {
+        "followerUid": { "type": "string", "description": "UID of the user who is following." },
+        "followingUid": { "type": "string", "description": "UID of the user being followed." },
+        "createdAt": { "type": "number", "description": "Timestamp of when the follow occurred." }
+      },
+      "required": ["followerUid", "followingUid", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users_public/{uid}": {
+      "schema": "UserProfilePublic",
+      "description": "Public user profile documents."
+    },
+    "/users_private/{uid}": {
+      "schema": "UserProfilePrivate",
+      "description": "Private user profile documents."
+    },
+    "/dreams/{dreamId}": {
+      "schema": "DreamEntry",
+      "description": "Dream entry documents."
+    },
+    "/follows/{followId}": {
+      "schema": "Follow",
+      "description": "Follow relationship documents."
+    }
+  }
+}

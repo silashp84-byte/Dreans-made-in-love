@@ -29,6 +29,7 @@ const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
   const [mood, setMood] = useState(initialEntry?.mood || moodOptions[0]); // Use translated moodOptions
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState(initialEntry?.imageUrl || '');
+  const [isPublic, setIsPublic] = useState(initialEntry?.isPublic || false);
 
   useEffect(() => {
     if (initialEntry) {
@@ -37,6 +38,7 @@ const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
       setTags(initialEntry.tags.join(', '));
       setMood(initialEntry.mood);
       setImageUrl(initialEntry.imageUrl || '');
+      setIsPublic(initialEntry.isPublic || false);
     }
   }, [initialEntry]);
 
@@ -62,6 +64,7 @@ const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
       mood,
       timestamp: initialEntry?.timestamp || Date.now(),
       imageUrl: imageUrl || undefined,
+      isPublic,
     };
     onSave(newEntry);
   };
@@ -140,7 +143,7 @@ const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
         />
         {imageUrl && (
           <div className="mt-4 relative w-48 h-32 rounded-lg overflow-hidden border border-indigo-600">
-            <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+            <img src={imageUrl} alt="Preview" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             <button
               type="button"
               onClick={() => {
@@ -158,6 +161,19 @@ const CreateEntryForm: React.FC<CreateEntryFormProps> = ({
         )}
       </div>
 
+
+      <div className="mb-4 flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="isPublic"
+          checked={isPublic}
+          onChange={(e) => setIsPublic(e.target.checked)}
+          className="w-5 h-5 rounded border-indigo-700 bg-indigo-900/30 text-indigo-600 focus:ring-indigo-500"
+        />
+        <label htmlFor="isPublic" className="text-indigo-200 text-sm font-semibold">
+          {t('isPublicLabel')}
+        </label>
+      </div>
 
       <div className="flex justify-end space-x-4 mt-6">
         {initialEntry && onDelete && (

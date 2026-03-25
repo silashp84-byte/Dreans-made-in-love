@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Share2, Link, MessageCircle } from 'lucide-react';
 import Modal from './Modal';
 import Button from './Button';
 import { useLocale } from '../context/LocaleContext';
@@ -114,32 +115,20 @@ const InviteFriendModal: React.FC<InviteFriendModalProps> = ({ isOpen, onClose }
       <div className="flex flex-wrap justify-center gap-4 mb-4">
         {navigator.share && ( // Conditionally render generic share button if API is supported
           <Button variant="primary" size="md" onClick={() => handleShare('generic')} className="flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.516 2.607c.484.192 1.085.192 1.569 0l6.516-2.607m-13.032 0A3 3 0 115.684 9.342a3 3 0 013-1.342m-3 1.342C5.482 12.482 5.614 12.938 5.816 13.342m0 2.684c.202.404.416.792.646 1.15l-3.34 1.336c-.485.192-1.086.192-1.57 0l-3.34-1.336c.23-.358.444-.746.646-1.15m0-2.684a3 3 0 110-2.684" />
-            </svg>
+            <Share2 className="h-5 w-5" />
             {t('shareGeneric')}
           </Button>
         )}
         <Button variant="outline" size="md" onClick={() => handleShare('link')} className="flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.135a4 4 0 005.656 0l4-4a4 4 0 10-5.656-5.656l-1.102 1.101" />
-          </svg>
+          <Link className="h-5 w-5" />
           {copiedToClipboard === 'link' ? t('copiedSuccessfully') : t('copyLink')}
         </Button>
       </div>
 
       <div className="flex flex-wrap justify-center gap-4">
         <Button variant="outline" size="md" onClick={() => handleShare('whatsapp')} className="flex items-center gap-2">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt={t('social_whatsapp')} className="h-5 w-5" />
+          <MessageCircle className="h-5 w-5 text-green-500" />
           {t('social_whatsapp')}
-        </Button>
-        <Button variant="outline" size="md" onClick={() => handleShare('twitter')} className="flex items-center gap-2">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/6/6f/Twitter_icon.svg" alt={t('social_twitter')} className="h-5 w-5" />
-          {t('social_twitter')}
-        </Button>
-        <Button variant="outline" size="md" onClick={() => handleShare('facebook')} className="flex items-center gap-2">
-          <img src="https://upload.wikimedia.org/wikipedia/commons/5/51/Facebook_f_logo_%282019%29.svg" alt={t('social_facebook')} className="h-5 w-5" />
-          {t('social_facebook')}
         </Button>
       </div>
     </Modal>

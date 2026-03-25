@@ -167,4 +167,24 @@ export const SIMULATED_USERS: SimulatedUser[] = [
       },
     ],
   },
+  {
+    id: 'user11',
+    username: 'GoldenDreamer',
+    avatarUrl: 'https://picsum.photos/id/1025/50/50',
+    bio: 'Living the high life in the dream realm. Success is a mindset, and my dreams are the blueprint.',
+    latitude: 34.0689, // Beverly Hills, CA (Millionaire spot)
+    longitude: -118.4004,
+    dreams: [
+      {
+        id: 'd1101',
+        title: 'The Diamond Gala in the Clouds',
+        content: 'Hosted a gala where the floor was made of solid diamonds and the guests were celestial royalty. We toasted with liquid starlight.',
+      },
+      {
+        id: 'd1102',
+        title: 'Private Island of Eternal Summer',
+        content: 'Owned a private island that moved through the oceans, always chasing the perfect sunset. The sand was pure gold dust.',
+      },
+    ],
+  },
 ];

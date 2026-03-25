@@ -39,7 +39,7 @@ const EntryDetail: React.FC<EntryDetailProps> = ({
 
       {entry.imageUrl && (
         <div className="mb-6 rounded-lg overflow-hidden max-h-96">
-          <img src={entry.imageUrl} alt={entry.title} className="w-full h-full object-contain" />
+          <img src={entry.imageUrl} alt={entry.title} referrerPolicy="no-referrer" className="w-full h-full object-contain" />
         </div>
       )}
 

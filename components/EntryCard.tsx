@@ -24,6 +24,7 @@ const EntryCard: React.FC<EntryCardProps> = ({ entry, onClick, t }) => {
             <img
               src={entry.imageUrl}
               alt={entry.title}
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover"
               loading="lazy"
             />

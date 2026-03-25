@@ -7,6 +7,7 @@ export interface DreamEntry {
   mood: string;
   timestamp: number;
   imageUrl?: string; // Base64 encoded image
+  isPublic?: boolean;
 }
 
 export type AppMode = 'list' | 'create' | 'detail' | 'ai';
@@ -48,4 +49,14 @@ export interface SimulatedUser {
 export interface UserConnection {
   userId: string;
   // You could add more details here if needed, e.g., 'followedSince': number;
+}
+
+// Platform types
+declare global {
+  interface Window {
+    aistudio: {
+      hasSelectedApiKey: () => Promise<boolean>;
+      openSelectKey: () => Promise<void>;
+    };
+  }
 }

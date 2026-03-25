@@ -29,6 +29,7 @@ const SimulatedUserCard: React.FC<SimulatedUserCardProps> = ({
       <img
         src={user.avatarUrl}
         alt={`${user.username}'s avatar`}
+        referrerPolicy="no-referrer"
         className="w-12 h-12 rounded-full object-cover border border-purple-500"
       />
       <div className="flex-grow">
